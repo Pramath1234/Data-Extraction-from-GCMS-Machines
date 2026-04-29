@@ -216,7 +216,7 @@ An interactive browser-based verification interface. Open directly in any browse
 
 | File | Description |
 |---|---|
-| `GC_MS_Paper - FinalDraft.pdf` | Full research paper (IJDAR submission draft) |
+| `GC_MS_Paper - FinalDraft.pdf` | Full research paper draft |
 | `ReportGCMS.pdf` | Project report |
 | `Automated Spectrum Peak Extraction - PPT.pdf` | Algorithm overview presentation |
 | `Parallel Processing - PPT.pdf` | Parallelism benchmarking presentation |
@@ -226,4 +226,4 @@ An interactive browser-based verification interface. Open directly in any browse
 ## Author
 
 **Pramath K P**  
-Indian Institute of Science (IISc), Bengaluru
+
