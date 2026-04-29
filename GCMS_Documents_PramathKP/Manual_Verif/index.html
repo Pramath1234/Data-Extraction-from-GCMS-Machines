@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual Verification Tool — GCMS Spectrum</title>
+  <meta name="description"
+    content="Manual verification tool for GCMS spectrum relative abundance comparison against algorithm predictions.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-primary: #0f1117;
+      --bg-secondary: #1a1d27;
+      --bg-card: #21242f;
+      --bg-input: #2a2e3b;
+      --border: #2e3344;
+      --border-focus: #6366f1;
+      --text-primary: #e8eaf0;
+      --text-secondary: #9ca3b0;
+      --text-muted: #6b7280;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --accent-glow: rgba(99, 102, 241, 0.15);
+      --success: #34d399;
+      --success-bg: rgba(52, 211, 153, 0.1);
+      --warning: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.1);
+      --error: #f87171;
+      --error-bg: rgba(248, 113, 113, 0.1);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* === HEADER === */
+    .header {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, #1e1b3a 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .header-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .header h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #e8eaf0, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header .subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* === LAYOUT === */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 24px 60px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      animation: fadeUp 0.35s ease-out both;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .card-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    /* === FORM ELEMENTS === */
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 2px 12px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #0f1117;
+    }
+
+    .btn-success:hover {
+      background: #4ade80;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+
+    /* === INPUT PANEL === */
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      align-items: end;
+    }
+
+    @media (max-width: 768px) {
+      .input-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .file-upload {
+      position: relative;
+    }
+
+    .file-upload input[type="file"] {
+      position: absolute;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      cursor: pointer;
+    }
+
+    .file-upload-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--bg-input);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all var(--transition);
+      cursor: pointer;
+    }
+
+    .file-upload:hover .file-upload-label {
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+
+    .file-upload-label.loaded {
+      border-color: var(--success);
+      color: var(--success);
+      border-style: solid;
+    }
+
+    /* === STATUS BAR === */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-top: 12px;
+    }
+
+    .status-bar .count {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* === TABLE === */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    thead th {
+      background: var(--bg-secondary);
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+    }
+
+    tbody td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr:hover {
+      background: rgba(99, 102, 241, 0.04);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .val-predicted {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .val-actual {
+      color: var(--success);
+      font-weight: 500;
+    }
+
+    .val-match {
+      color: var(--success);
+    }
+
+    .val-mismatch {
+      color: var(--warning);
+    }
+
+    /* === HEIGHT INPUTS GRID === */
+    .height-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+
+    .height-input-group {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      transition: border-color var(--transition);
+    }
+
+    .height-input-group:focus-within {
+      border-color: var(--accent);
+    }
+
+    .height-input-group label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .height-input-group input {
+      padding: 6px 8px;
+      font-size: 0.85rem;
+      background: var(--bg-input);
+    }
+
+    /* === MAX H INPUT === */
+    .max-h-row {
+      display: flex;
+      align-items: end;
+      gap: 16px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .max-h-row .input-group {
+      flex: 0 0 200px;
+    }
+
+    .max-h-row .btn {
+      margin-bottom: 1px;
+    }
+
+    /* === RMSE DISPLAY === */
+    .rmse-display {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 20px 24px;
+      border-radius: var(--radius);
+      margin-top: 8px;
+    }
+
+    .rmse-display.good {
+      background: var(--success-bg);
+      border: 1px solid rgba(52, 211, 153, 0.2);
+    }
+
+    .rmse-display.moderate {
+      background: var(--warning-bg);
+      border: 1px solid rgba(251, 191, 36, 0.2);
+    }
+
+    .rmse-display.bad {
+      background: var(--error-bg);
+      border: 1px solid rgba(248, 113, 113, 0.2);
+    }
+
+    .rmse-value {
+      font-size: 2rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rmse-display.good .rmse-value {
+      color: var(--success);
+    }
+
+    .rmse-display.moderate .rmse-value {
+      color: var(--warning);
+    }
+
+    .rmse-display.bad .rmse-value {
+      color: var(--error);
+    }
+
+    .rmse-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .rmse-sublabel {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* === GROUND TRUTH HISTORY === */
+    .history-list {
+      max-height: 240px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 6px;
+      font-size: 0.83rem;
+      transition: background var(--transition);
+    }
+
+    .history-item:hover {
+      background: var(--bg-input);
+    }
+
+    .history-file {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .history-algo {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .history-rmse {
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .history-btn-remove {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: color var(--transition);
+    }
+
+    .history-btn-remove:hover {
+      color: var(--error);
+    }
+
+    .actions-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* === EMPTY STATE === */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .empty-state p {
+      font-size: 0.9rem;
+    }
+
+    /* === TOAST === */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 20px;
+      font-size: 0.85rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      animation: toastIn 0.3s ease-out both;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toast.success {
+      border-left: 3px solid var(--success);
+    }
+
+    .toast.error {
+      border-left: 3px solid var(--error);
+    }
+
+    .toast.info {
+      border-left: 3px solid var(--accent);
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateX(40px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* === HIDDEN === */
+    .hidden {
+      display: none !important;
+    }
+
+    /* === SCROLLBAR === */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    /* === Entry info row === */
+    .entry-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .entry-info-item {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+    }
+
+    .entry-info-item .label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .entry-info-item .value {
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    @media (max-width: 640px) {
+      .entry-info {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-icon">⚗️</div>
+    <div>
+      <h1>Manual Verification Tool</h1>
+      <div class="subtitle">GCMS Spectrum — Relative Abundance Comparison</div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- STEP 1: LOAD JSON -->
+    <div class="card" style="animation-delay: 0.05s">
+      <div class="card-title"><span class="dot"></span> Step 1 — Load Algorithm JSON</div>
+      <div class="input-row">
+        <div>
+          <label for="algoSelect">Algorithm</label>
+          <select id="algoSelect">
+            <option value="">— Choose Algorithm —</option>
+            <option value="Greedy">Greedy</option>
+            <option value="DynamicProgramming">Dynamic Programming</option>
+            <option value="Graph">Graph</option>
+          </select>
+        </div>
+        <div class="file-upload">
+          <label>JSON File</label>
+          <div class="file-upload-label" id="fileLabel">📂 Click to load JSON…</div>
+          <input type="file" id="fileInput" accept=".json">
+        </div>
+        <div>
+          <label for="fileSearch">Search File Name</label>
+          <input type="text" id="fileSearch" placeholder="e.g. 10001A.pdf" disabled>
+        </div>
+      </div>
+      <div class="status-bar hidden" id="statusBar">
+        <span>✓ Loaded</span>
+        <span><span class="count" id="entryCount">0</span> entries found</span>
+        <span>|</span>
+        <span id="algoLabelStatus">—</span>
+      </div>
+    </div>
+
+    <!-- STEP 2: ENTRY DETAILS + MANUAL INPUT -->
+    <div class="card hidden" id="entryCard" style="animation-delay: 0.1s">
+      <div class="card-title"><span class="dot"></span> Step 2 — Entry Details &amp; Manual Heights</div>
+
+      <div class="entry-info" id="entryInfo"></div>
+
+      <div class="card-title" style="margin-top: 20px; margin-bottom: 12px;"><span class="dot"
+          style="background: var(--success);"></span> Enter Peak Heights</div>
+      <div class="height-grid" id="heightGrid"></div>
+
+      <div class="max-h-row">
+        <div class="input-group">
+          <label for="maxH">Max Height (H)</label>
+          <input type="number" id="maxH" placeholder="e.g. 9999" step="any" min="0.0001">
+        </div>
+        <button class="btn btn-primary" id="btnCalculate" disabled>Calculate</button>
+        <button class="btn btn-outline" id="btnClearHeights">Clear Heights</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: RESULTS -->
+    <div class="card hidden" id="resultsCard" style="animation-delay: 0.15s">
+      <div class="card-title"><span class="dot"></span> Step 3 — Results</div>
+
+      <div class="rmse-display" id="rmseDisplay">
+        <div>
+          <div class="rmse-value" id="rmseValue">—</div>
+          <div class="rmse-sublabel">Root Mean Square Error</div>
+        </div>
+        <div>
+          <div class="rmse-label" id="rmseQuality">—</div>
+        </div>
+      </div>
+
+      <div class="table-wrapper" style="margin-top: 20px;">
+        <table id="resultsTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>m/z</th>
+              <th>Height</th>
+              <th>Predicted RA</th>
+              <th>Actual RA</th>
+              <th>Δ Error</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+
+      <div class="max-h-row" style="margin-top: 20px;">
+        <button class="btn btn-success" id="btnAddHistory">＋ Add to Ground Truth</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: GROUND TRUTH EXPORT -->
+    <div class="card" style="animation-delay: 0.2s">
+      <div class="card-title"><span class="dot"></span> Ground Truth History</div>
+
+      <div class="history-list" id="historyList">
+        <div class="empty-state" id="historyEmpty">
+          <div class="icon">📋</div>
+          <p>No entries yet. Compute results and add them to build your ground truth.</p>
+        </div>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn btn-primary" id="btnDownload" disabled>⬇ Download GroundTruth.json</button>
+        <button class="btn btn-success" id="btnCopyJSON" disabled>📋 Copy JSON to Clipboard</button>
+        <button class="btn btn-outline" id="btnClearHistory" disabled>Clear All</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    // ============================
+    // STATE
+    // ============================
+    let jsonData = null;        // loaded array from JSON file
+    let currentEntry = null;    // matched entry
+    let currentAlgo = '';       // algorithm name
+    let groundTruth = [];       // accumulated results
+
+    // ============================
+    // DOM REFS
+    // ============================
+    const $ = (s) => document.querySelector(s);
+    const algoSelect = $('#algoSelect');
+    const fileInput = $('#fileInput');
+    const fileLabel = $('#fileLabel');
+    const fileSearch = $('#fileSearch');
+    const statusBar = $('#statusBar');
+    const entryCount = $('#entryCount');
+    const algoLabelStatus = $('#algoLabelStatus');
+
+    const entryCard = $('#entryCard');
+    const entryInfo = $('#entryInfo');
+    const heightGrid = $('#heightGrid');
+    const maxH = $('#maxH');
+    const btnCalculate = $('#btnCalculate');
+    const btnClearHeights = $('#btnClearHeights');
+
+    const resultsCard = $('#resultsCard');
+    const rmseDisplay = $('#rmseDisplay');
+    const rmseValue = $('#rmseValue');
+    const rmseQuality = $('#rmseQuality');
+    const resultsBody = $('#resultsBody');
+    const btnAddHistory = $('#btnAddHistory');
+
+    const historyList = $('#historyList');
+    const historyEmpty = $('#historyEmpty');
+    const btnDownload = $('#btnDownload');
+    const btnCopyJSON = $('#btnCopyJSON');
+    const btnClearHistory = $('#btnClearHistory');
+
+
+
+    // ============================
+    // TOAST
+    // ============================
+    function toast(msg, type = 'info') {
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.textContent = msg;
+      $('#toastContainer').appendChild(t);
+      setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(40px)'; setTimeout(() => t.remove(), 300); }, 2800);
+    }
+
+    // ============================
+    // FILE LOAD
+    // ============================
+    algoSelect.addEventListener('change', () => {
+      currentAlgo = algoSelect.value;
+      if (currentAlgo) algoLabelStatus.textContent = currentAlgo;
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // auto-detect algorithm from filename
+      const fname = file.name.replace('.json', '');
+      if (['Greedy', 'DynamicProgramming', 'Graph'].some(a => fname.toLowerCase().includes(a.toLowerCase()))) {
+        for (const opt of algoSelect.options) {
+          if (fname.toLowerCase().includes(opt.value.toLowerCase()) && opt.value) {
+            algoSelect.value = opt.value;
+            currentAlgo = opt.value;
+            algoLabelStatus.textContent = currentAlgo;
+            break;
+          }
+        }
+      }
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          jsonData = JSON.parse(ev.target.result);
+          if (!Array.isArray(jsonData)) throw new Error('JSON must be an array');
+
+          fileLabel.textContent = `✓ ${file.name}`;
+          fileLabel.classList.add('loaded');
+          entryCount.textContent = jsonData.length;
+          statusBar.classList.remove('hidden');
+          fileSearch.disabled = false;
+          fileSearch.focus();
+
+          // reset downstream
+          entryCard.classList.add('hidden');
+          resultsCard.classList.add('hidden');
+          currentEntry = null;
+
+          toast(`Loaded ${jsonData.length} entries from ${file.name}`, 'success');
+        } catch (err) {
+          toast(`Error parsing JSON: ${err.message}`, 'error');
+          jsonData = null;
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // ============================
+    // SEARCH
+    // ============================
+    let searchTimeout;
+    fileSearch.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(doSearch, 250);
+    });
+    fileSearch.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { clearTimeout(searchTimeout); doSearch(); }
+    });
+
+    function doSearch() {
+      const q = fileSearch.value.trim();
+      if (!q || !jsonData) return;
+
+      const entry = jsonData.find(item => item.file === q);
+      if (!entry) {
+        toast(`File "${q}" not found in JSON`, 'error');
+        entryCard.classList.add('hidden');
+        resultsCard.classList.add('hidden');
+        currentEntry = null;
+        return;
+      }
+
+      currentEntry = entry;
+      renderEntryDetails(entry);
+      entryCard.classList.remove('hidden');
+      resultsCard.classList.add('hidden');
+      toast(`Found: ${entry.chemical_name}`, 'success');
+    }
+
+    // ============================
+    // RENDER ENTRY
+    // ============================
+    function renderEntryDetails(entry) {
+      // Info panel
+      entryInfo.innerHTML = `
+        <div class="entry-info-item">
+          <div class="label">Chemical Name</div>
+          <div class="value">${escapeHtml(entry.chemical_name)}</div>
+        </div>
+        <div class="entry-info-item">
+          <div class="label">File</div>
+          <div class="value">${escapeHtml(entry.file)}</div>
+        </div>
+      `;
+
+      // Height inputs grid
+      heightGrid.innerHTML = '';
+      entry.spectrum.forEach((mz, i) => {
+        const div = document.createElement('div');
+        div.className = 'height-input-group';
+        div.innerHTML = `
+          <label>m/z ${escapeHtml(mz)}</label>
+          <input type="number" class="height-val" data-index="${i}" placeholder="Height" step="any" min="0">
+        `;
+        heightGrid.appendChild(div);
+      });
+
+      maxH.value = '';
+      btnCalculate.disabled = false;
+    }
+
+    // ============================
+    // CALCULATE
+    // ============================
+    btnCalculate.addEventListener('click', calculate);
+
+    function calculate() {
+      if (!currentEntry) return;
+
+      const H = parseFloat(maxH.value);
+      if (!H || H <= 0) {
+        toast('Please enter a valid Max Height (H) > 0', 'error');
+        maxH.focus();
+        return;
+      }
+
+      const heightInputs = heightGrid.querySelectorAll('.height-val');
+      const heights = [];
+      let valid = true;
+
+      heightInputs.forEach(inp => {
+        const v = parseFloat(inp.value);
+        if (isNaN(v)) { valid = false; }
+        heights.push(isNaN(v) ? 0 : v);
+      });
+
+      if (!valid) {
+        toast('Some height fields are empty — treating them as 0', 'info');
+      }
+
+      const predicted = currentEntry.relative_abundance;
+
+      if (heights.length !== predicted.length) {
+        toast(`Length mismatch: ${heights.length} heights vs ${predicted.length} predicted`, 'error');
+        return;
+      }
+
+      // === Core formula from ManualScripting.py ===
+      // actual = (x / H) * 100
+      const actual = heights.map(x => (x / H) * 100);
+
+      // RMSE = sqrt(mean((actual - predicted)^2))
+      const sumSqErr = actual.reduce((sum, a, i) => sum + Math.pow(a - predicted[i], 2), 0);
+      const rmse = Math.sqrt(sumSqErr / actual.length);
+
+      renderResults(currentEntry, heights, actual, predicted, rmse, H);
+      resultsCard.classList.remove('hidden');
+      resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ============================
+    // RENDER RESULTS
+    // ============================
+    function renderResults(entry, heights, actual, predicted, rmse, H) {
+      // RMSE display
+      rmseValue.textContent = rmse.toFixed(4);
+      rmseDisplay.className = 'rmse-display';
+      if (rmse < 5) { rmseDisplay.classList.add('good'); rmseQuality.textContent = '✓ Excellent match'; }
+      else if (rmse < 15) { rmseDisplay.classList.add('moderate'); rmseQuality.textContent = '⚠ Moderate deviation'; }
+      else { rmseDisplay.classList.add('bad'); rmseQuality.textContent = '✗ High deviation'; }
+
+      // Table
+      resultsBody.innerHTML = '';
+      entry.spectrum.forEach((mz, i) => {
+        const delta = Math.abs(actual[i] - predicted[i]);
+        const deltaClass = delta < 3 ? 'val-match' : delta < 10 ? 'val-mismatch' : '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${i + 1}</td>
+          <td><strong>${escapeHtml(mz)}</strong></td>
+          <td>${heights[i].toFixed(2)}</td>
+          <td class="val-predicted">${predicted[i].toFixed(4)}</td>
+          <td class="val-actual">${actual[i].toFixed(4)}</td>
+          <td class="${deltaClass}">${delta.toFixed(4)}</td>
+        `;
+        resultsBody.appendChild(tr);
+      });
+
+      // Store for add-to-history
+      btnAddHistory.onclick = () => addToHistory(entry, actual, predicted, rmse, H, heights);
+    }
+
+    // ============================
+    // GROUND TRUTH HISTORY
+    // ============================
+    function addToHistory(entry, actual, predicted, rmse, H, heights) {
+      const record = {
+        algorithm: currentAlgo || 'Unknown',
+        file: entry.file,
+        chemical_name: entry.chemical_name,
+        spectrum: entry.spectrum,
+        predicted_relative_abundance: predicted,
+        manual_heights: heights,
+        max_height: H,
+        actual_relative_abundance: actual.map(v => parseFloat(v.toFixed(6))),
+        rmse: parseFloat(rmse.toFixed(6))
+      };
+
+      // check duplicate
+      const dup = groundTruth.findIndex(g => g.file === record.file && g.algorithm === record.algorithm);
+      if (dup >= 0) {
+        groundTruth[dup] = record;
+        toast(`Updated existing entry for ${record.file}`, 'info');
+      } else {
+        groundTruth.push(record);
+        toast(`Added ${record.file} to ground truth (${groundTruth.length} total)`, 'success');
+      }
+
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const items = historyList.querySelectorAll('.history-item');
+      items.forEach(el => el.remove());
+
+      if (groundTruth.length === 0) {
+        historyEmpty.classList.remove('hidden');
+        btnDownload.disabled = true;
+        btnCopyJSON.disabled = true;
+        btnClearHistory.disabled = true;
+        return;
+      }
+
+      historyEmpty.classList.add('hidden');
+      btnDownload.disabled = false;
+      btnCopyJSON.disabled = false;
+      btnClearHistory.disabled = false;
+
+      groundTruth.forEach((g, idx) => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        const rmseClass = g.rmse < 5 ? 'val-match' : g.rmse < 15 ? 'val-mismatch' : '';
+        div.innerHTML = `
+          <div>
+            <span class="history-file">${escapeHtml(g.file)}</span>
+            <span class="history-algo">&nbsp;(${escapeHtml(g.algorithm)})</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span class="history-rmse ${rmseClass}">RMSE ${g.rmse.toFixed(4)}</span>
+            <button class="history-btn-remove" data-idx="${idx}" title="Remove">✕</button>
+          </div>
+        `;
+        div.querySelector('.history-btn-remove').addEventListener('click', () => {
+          groundTruth.splice(idx, 1);
+          renderHistory();
+          toast('Entry removed', 'info');
+        });
+        historyList.appendChild(div);
+      });
+    }
+
+    // ============================
+    // DOWNLOAD / CLEAR
+    // ============================
+    btnDownload.addEventListener('click', () => {
+      if (groundTruth.length === 0) return;
+      const jsonStr = JSON.stringify(groundTruth, null, 2);
+      // Open a new window with the JSON — user can Cmd+S / Ctrl+S to save
+      const w = window.open('', '_blank');
+      if (w) {
+        w.document.open();
+        w.document.write(`<!DOCTYPE html><html><head><title>GroundTruth.json</title><style>body{background:#1a1d27;color:#e8eaf0;font-family:monospace;padding:20px;white-space:pre-wrap;word-wrap:break-word;font-size:13px;line-height:1.5;}p.hint{color:#9ca3b0;font-family:sans-serif;font-size:14px;margin-bottom:16px;padding:12px;background:#21242f;border-radius:8px;border:1px solid #2e3344;}</style></head><body><p class="hint">Press <b>Cmd+S</b> (Mac) or <b>Ctrl+S</b> (Windows) to save this file as <b>GroundTruth.json</b></p>${escapeHtml(jsonStr)}</body></html>`);
+        w.document.close();
+        toast('JSON opened in new tab — press Cmd+S to save', 'success');
+      } else {
+        toast('Pop-up blocked! Use Copy JSON instead.', 'error');
+      }
+    });
+
+    btnCopyJSON.addEventListener('click', async () => {
+      if (groundTruth.length === 0) return;
+      const jsonStr = JSON.stringify(groundTruth, null, 2);
+      try {
+        await navigator.clipboard.writeText(jsonStr);
+        toast('JSON copied to clipboard! Paste into a file to save.', 'success');
+        btnCopyJSON.textContent = '✓ Copied!';
+        setTimeout(() => { btnCopyJSON.textContent = '📋 Copy JSON to Clipboard'; }, 2000);
+      } catch (e) {
+        // Fallback for older browsers / file:// restrictions
+        const ta = document.createElement('textarea');
+        ta.value = jsonStr;
+        ta.style.cssText = 'position:fixed;top:-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        toast('JSON copied to clipboard!', 'success');
+        btnCopyJSON.textContent = '✓ Copied!';
+        setTimeout(() => { btnCopyJSON.textContent = '📋 Copy JSON to Clipboard'; }, 2000);
+      }
+    });
+
+    btnClearHistory.addEventListener('click', () => {
+      if (!confirm('Clear all ground truth entries?')) return;
+      groundTruth = [];
+      renderHistory();
+      toast('History cleared', 'info');
+    });
+
+    btnClearHeights.addEventListener('click', () => {
+      heightGrid.querySelectorAll('.height-val').forEach(inp => inp.value = '');
+      maxH.value = '';
+      resultsCard.classList.add('hidden');
+    });
+
+    // ============================
+    // KEYBOARD SHORTCUT: Enter to calculate
+    // ============================
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.ctrlKey) {
+        e.preventDefault();
+        calculate();
+      }
+    });
+
+    // ============================
+    // UTIL
+    // ============================
+    function escapeHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+  </script>
+</body>
+
+</html>
